@@ -16,6 +16,7 @@ const winnerCard = document.getElementById("winnerCard");
 const winnerDetails = document.getElementById("winnerDetails");
 const wheelDisc = document.getElementById("wheelDisc");
 const wheelLabels = document.getElementById("wheelLabels");
+const countdownCenter = document.getElementById("countdownCenter");
 const poolCount = document.getElementById("poolCount");
 const subscriberNames = document.getElementById("subscriberNames");
 const nameCount = document.getElementById("nameCount");
@@ -177,7 +178,7 @@ function handleSecretClick() {
   }
 
 
-  if (secretClickCount === 3) {
+  if (secretClickCount === 5) {
     secretClickCount = 0;
     setupSecretWinner();
     return;
@@ -320,35 +321,67 @@ async function runSpin() {
   state.spinning = true;
   spinBtn.disabled = true;
   spinnerDisplay.classList.add("active");
+  countdownCenter.textContent = "";
+  countdownCenter.classList.remove("active");
 
 
   const winner = state.manualWinner || winnerPool[Math.floor(Math.random() * winnerPool.length)];
-  const sequence = buildSpinSequence(state.subscribers, winner, 36);
+  const totalDurationMs = 22000;
+  const countdownMs = 5000;
+  const startTime = Date.now();
 
 
-  const turns = 7;
+  const turns = 20;
   const extra = Math.floor(Math.random() * 360);
   const currentRotation = Number(wheelDisc.dataset.rotation || "0");
   const nextRotation = currentRotation + turns * 360 + extra;
+  wheelDisc.style.transitionDuration = `${totalDurationMs}ms`;
   wheelDisc.style.setProperty("--wheel-rotation", `${nextRotation}deg`);
   wheelDisc.dataset.rotation = String(nextRotation);
 
 
-  for (let i = 0; i < sequence.length; i += 1) {
-    const person = sequence[i];
-    spinnerDisplay.textContent = person.name;
+  while (true) {
+    const now = Date.now();
+    const elapsed = now - startTime;
+    const remaining = totalDurationMs - elapsed;
+    if (remaining <= 0) {
+      break;
+    }
 
 
-    const progress = i / sequence.length;
-    const delay = 40 + Math.floor(progress * progress * 230);
+    const randomPerson = winnerPool[Math.floor(Math.random() * winnerPool.length)];
+    spinnerDisplay.textContent = randomPerson.name;
+
+
+    if (remaining <= countdownMs) {
+      countdownCenter.classList.add("active");
+      countdownCenter.textContent = String(Math.max(1, Math.ceil(remaining / 1000)));
+    } else {
+      countdownCenter.classList.remove("active");
+      countdownCenter.textContent = "";
+    }
+
+
+    const progress = elapsed / totalDurationMs;
+    const delay = 70 + Math.floor(progress * progress * 260);
     await wait(delay);
   }
 
 
+  // Briefly show GO in the center right after the 5..1 countdown.
+  countdownCenter.classList.add("active");
+  countdownCenter.textContent = "GO";
+  await wait(650);
+
+
   spinnerDisplay.classList.remove("active");
+  spinnerDisplay.textContent = winner.name;
+  countdownCenter.classList.remove("active");
+  countdownCenter.textContent = "";
   state.spinning = false;
   spinBtn.disabled = false;
   revealWinner(winner);
+  launchConfetti(180);
 }
 
 
@@ -425,6 +458,33 @@ function wait(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+
+function launchConfetti(pieceCount = 140) {
+  const layer = document.createElement("div");
+  layer.className = "confetti-layer";
+
+
+  const colors = ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93", "#f15bb5"];
+
+
+  for (let i = 0; i < pieceCount; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.left = `${Math.random() * 100}vw`;
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.25}s`;
+    piece.style.animationDuration = `${2 + Math.random() * 1.8}s`;
+    piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+    layer.appendChild(piece);
+  }
+
+
+  document.body.appendChild(layer);
+  setTimeout(() => {
+    layer.remove();
+  }, 4200);
 }
 
 
