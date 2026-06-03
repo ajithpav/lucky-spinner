@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Giveaway Picker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar panel">
+        <h1>Giveaway <button id="secretW" class="secret-w" type="button" aria-label="hidden winner control">W</button>heel</h1>
+        <span id="poolCount" class="pool-pill">0 / 0 in pool</span>
+      </header>
+
+
+      <section class="layout">
+        <section class="wheel-stage panel">
+          <div class="pointer"></div>
+          <div id="wheelDisc" class="wheel-disc" style="--wheel-rotation: 0deg">
+            <div id="wheelLabels" class="wheel-labels"></div>
+            <div class="wheel-center">C</div>
+          </div>
+
+
+          <div class="spinner-box">
+            <div class="spinner-label">Live ticker</div>
+            <div id="spinnerDisplay" class="spinner-display">Waiting for data...</div>
+          </div>
+
+
+          <button id="spinBtn" class="spin-btn" disabled>Spin</button>
+
+
+          <section class="winner" id="winnerCard" hidden>
+            <h3>Winner</h3>
+            <ul id="winnerDetails"></ul>
+          </section>
+        </section>
+
+
+        <aside class="panel control-panel">
+          <p class="panel-kicker">Live Setup</p>
+          <h2>Upload Entries</h2>
+
+
+          <div class="upload-row">
+            <input id="csvFile" class="hidden-file-input" type="file" accept=".csv" />
+            <button id="uploadBtn" class="btn btn-ghost" type="button">Choose CSV</button>
+            <button id="resetEntriesBtn" class="btn btn-ghost" type="button">Reset</button>
+          </div>
+
+
+          <div class="names-panel">
+            <div class="names-panel-head">
+              <span>Uploaded Names</span>
+              <span id="nameCount" class="name-count">0</span>
+            </div>
+            <div class="names-list-wrap">
+              <ul id="subscriberNames" class="names-list">
+                <li class="names-empty">Upload a CSV to see names here.</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
+
+
