@@ -44,6 +44,8 @@ body {
 }
 
 
+
+
 h1,
 h2,
 h3 {
@@ -135,7 +137,7 @@ h1 {
   position: relative;
   transform: rotate(var(--wheel-rotation));
   transition: transform 5.8s cubic-bezier(0.12, 0.72, 0.05, 1);
-  background: conic-gradient(#ef4338 0deg 90deg, #ef7f59 90deg 180deg, #ebad62 180deg 270deg, #4cb0c9 270deg 360deg);
+  background: conic-gradient(#ff4d6d 0deg 45deg, #ff9f1c 45deg 90deg, #ffd60a 90deg 135deg, #70e000 135deg 180deg, #00bbf9 180deg 225deg, #4361ee 225deg 270deg, #9b5de5 270deg 315deg, #f15bb5 315deg 360deg);
 }
 
 

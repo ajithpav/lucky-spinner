@@ -22,11 +22,15 @@ const nameCount = document.getElementById("nameCount");
 const secretW = document.getElementById("secretW");
 
 
+let secretClickCount = 0;
+let secretClickTimer = null;
+
+
 csvFileInput.addEventListener("change", handleFileUpload);
 uploadBtn.addEventListener("click", openFilePicker);
 resetEntriesBtn.addEventListener("click", resetEntries);
 spinBtn.addEventListener("click", runSpin);
-secretW.addEventListener("dblclick", setupSecretWinner);
+secretW.addEventListener("click", handleSecretClick);
 window.addEventListener("resize", renderWheel);
 
 
@@ -60,7 +64,7 @@ function openFilePicker() {
 function parseCsv(csvText) {
   const lines = csvText
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((line) => line.trimEnd())
     .filter(Boolean);
 
 
@@ -69,11 +73,11 @@ function parseCsv(csvText) {
   }
 
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const headers = parseCsvLine(lines[0]).map((h) => sanitizeCsvCell(h));
 
 
   return lines.slice(1).map((line, index) => {
-    const cols = line.split(",").map((c) => c.trim());
+    const cols = parseCsvLine(line).map((c) => sanitizeCsvCell(c));
     const row = {};
 
 
@@ -82,17 +86,18 @@ function parseCsv(csvText) {
     });
 
 
-    const serialFromFile = row["s.no"] || row.sno || row.serial || row.id || "";
+    const serialFromFile = getByAliases(row, ["s.no", "sno", "serial", "id", "order_id"]);
     const serialNumber = serialFromFile || String(index + 1);
 
 
     return {
       sno: String(serialNumber),
-      name: row.name || "Unknown",
-      email: row.email || "-",
-      city: row.city || "-",
-      phone: row.phone || "-",
-      tier: row.tier || "-",
+      name: getByAliases(row, ["name", "full_name", "customer_name"]) || "Unknown",
+      email: getByAliases(row, ["email", "mail"]) || "-",
+      city: getByAliases(row, ["city", "town", "location"]) || "-",
+      phone: getByAliases(row, ["phone", "phone_number", "phone number", "mobile", "mobile_number"]) || "-",
+      tier: getByAliases(row, ["tier", "plan", "subscription_tier", "payment status"]) || "-",
+      rawData: row,
     };
   });
 }
@@ -163,6 +168,28 @@ function getWinnerPool() {
 }
 
 
+function handleSecretClick() {
+  secretClickCount += 1;
+
+
+  if (secretClickTimer) {
+    clearTimeout(secretClickTimer);
+  }
+
+
+  if (secretClickCount === 3) {
+    secretClickCount = 0;
+    setupSecretWinner();
+    return;
+  }
+
+
+  secretClickTimer = setTimeout(() => {
+    secretClickCount = 0;
+  }, 550);
+}
+
+
 function setupSecretWinner() {
   const winnerName = prompt("Secret Winner Setup: enter full winner name with initial");
   if (winnerName === null) {
@@ -170,17 +197,29 @@ function setupSecretWinner() {
   }
 
 
-  const winnerPhone = prompt("Enter winner mobile number");
+  const winnerPhone = prompt("Enter winner mobile number (optional)");
   if (winnerPhone === null) {
+    return;
+  }
+
+
+  const winnerEmail = prompt("Enter winner email (optional)");
+  if (winnerEmail === null) {
     return;
   }
 
 
   const cleanedName = winnerName.trim();
   const cleanedPhone = winnerPhone.trim();
+  const cleanedEmail = winnerEmail.trim();
 
 
-  if (!cleanedName || !cleanedPhone) {
+  if (!cleanedName) {
+    return;
+  }
+
+
+  if (!cleanedPhone && !cleanedEmail) {
     return;
   }
 
@@ -188,6 +227,7 @@ function setupSecretWinner() {
   state.pendingSecretCriteria = {
     name: cleanedName,
     phone: cleanedPhone,
+    email: cleanedEmail,
   };
 
 
@@ -202,21 +242,66 @@ function resolvePendingSecretWinner() {
 
 
   const criteria = state.pendingSecretCriteria;
+  const criteriaName = normalizeName(criteria.name);
+  const criteriaPhone = normalizePhone(criteria.phone);
+  const criteriaEmail = normalizeEmail(criteria.email || "");
+  const criteriaPhoneLast10 = lastDigits(criteriaPhone, 10);
+
+
   const matched = state.subscribers.find((person) => {
-    return (
-      normalizeName(person.name) === normalizeName(criteria.name) &&
-      normalizePhone(person.phone) === normalizePhone(criteria.phone)
-    );
+    const personName = normalizeName(person.name);
+    const personPhone = normalizePhone(person.phone);
+    const personEmail = normalizeEmail(person.email);
+    const personPhoneLast10 = lastDigits(personPhone, 10);
+
+
+    const nameMatch =
+      personName === criteriaName ||
+      personName.includes(criteriaName) ||
+      criteriaName.includes(personName);
+
+
+    const phoneMatch =
+      personPhone === criteriaPhone ||
+      personPhoneLast10 === criteriaPhoneLast10;
+
+
+    const emailMatch = criteriaEmail && personEmail === criteriaEmail;
+
+
+    const identifierMatch =
+      (criteriaPhone && phoneMatch) ||
+      (criteriaEmail && emailMatch);
+
+
+    return nameMatch && identifierMatch;
   });
 
 
-  if (!matched) {
+  // Fallback: if phone uniquely matches a single row, use it.
+  const phoneOnlyMatches = state.subscribers.filter((person) => {
+    const personPhone = normalizePhone(person.phone);
+    const personPhoneLast10 = lastDigits(personPhone, 10);
+    return personPhone === criteriaPhone || personPhoneLast10 === criteriaPhoneLast10;
+  });
+
+
+  const emailOnlyMatches = state.subscribers.filter((person) => {
+    return normalizeEmail(person.email) === criteriaEmail;
+  });
+
+
+  const fallbackByPhone = criteriaPhone ? phoneOnlyMatches.length === 1 ? phoneOnlyMatches[0] : null : null;
+  const fallbackByEmail = criteriaEmail ? emailOnlyMatches.length === 1 ? emailOnlyMatches[0] : null : null;
+
+
+  if (!matched && !fallbackByPhone && !fallbackByEmail) {
     state.manualWinner = null;
     return;
   }
 
 
-  state.manualWinner = matched;
+  state.manualWinner = matched || fallbackByPhone || fallbackByEmail;
 }
 
 
@@ -281,35 +366,36 @@ function revealWinner(winner) {
   winnerCard.hidden = false;
 
 
+  const row = winner.rawData || {};
   const fields = [
-    ["Name", winner.name],
-    ["Phone", winner.phone],
-    ["Email", winner.email],
-    ["City", winner.city],
-    ["Tier", winner.tier],
+    ["name", getByAliases(row, ["name", "full_name", "customer_name"]) || winner.name || "-"],
+    ["phone_number", getByAliases(row, ["phone_number", "phone", "phone number", "mobile", "mobile_number"]) || winner.phone || "-"],
+    ["email", getByAliases(row, ["email", "mail"]) || winner.email || "-"],
+    ["city", getByAliases(row, ["city", "town", "location"]) || winner.city || "-"],
+    ["payment id", getByAliases(row, ["payment id", "payment_id", "paymentid"]) || "-"],
+    ["order_id", getByAliases(row, ["order_id", "order id", "orderid"]) || "-"],
+    ["payment date", getByAliases(row, ["payment date", "payment_date", "date", "paymentdate"]) || "-"],
   ];
 
 
   winnerDetails.innerHTML = fields
-    .map(([label, value]) => `<li><strong>${label}:</strong> ${escapeHtml(value)}</li>`)
+    .map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value || "-")}</li>`)
     .join("");
 }
 
 
 function renderWheel() {
-  const preview = state.subscribers.slice(0, 8);
-  const labels =
-    preview.length > 0
-      ? preview
-      : [{ sno: "001" }, { sno: "002" }, { sno: "003" }, { sno: "004" }];
-
-
-  const colors = ["#ef4338", "#ef7f59", "#ebad62", "#4cb0c9", "#6cb5d3", "#db7e50", "#e89a54", "#3da3bf"];
-  const size = labels.length;
+  // Show 12 mild color slices with only number labels.
+  const size = 12;
+  const colors = [
+    "#1f3c88", "#2f5aa8", "#3f77b9", "#4f94bb",
+    "#5d9d92", "#4f7f6d", "#6e8f71", "#8f9f7a",
+    "#a89f7a", "#8f7f6b", "#6f6684", "#4f4f78"
+  ];
   const step = 360 / size;
 
 
-  const gradientStops = labels
+  const gradientStops = Array.from({ length: size })
     .map((_, idx) => {
       const start = idx * step;
       const end = start + step;
@@ -321,11 +407,11 @@ function renderWheel() {
   wheelDisc.style.background = `conic-gradient(${gradientStops})`;
 
 
-  wheelLabels.innerHTML = labels
-    .map((item, idx) => {
+  wheelLabels.innerHTML = Array.from({ length: size })
+    .map((_, idx) => {
       const angle = idx * step + step / 2 - 90;
-      const shortLabel = String(item.sno || item.name || "").slice(0, 12);
-      return `<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(${angle}deg) translateY(calc(var(--label-radius) * -1)) rotate(90deg);">${escapeHtml(shortLabel)}</span>`;
+      const label = String(idx + 1).padStart(2, "0");
+      return `<span class="wheel-label" style="transform: translate(-50%, -50%) rotate(${angle}deg) translateY(calc(var(--label-radius) * -1)) rotate(90deg);">${label}</span>`;
     })
     .join("");
 
@@ -343,12 +429,93 @@ function wait(ms) {
 
 
 function normalizeName(value) {
-  return String(value).trim().toLowerCase().replace(/\s+/g, " ");
+  return String(value)
+    .toLowerCase()
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 
 function normalizePhone(value) {
   return String(value).replace(/\D/g, "");
+}
+
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+
+function lastDigits(value, count) {
+  return String(value).slice(-count);
+}
+
+
+function sanitizeCsvCell(value) {
+  return String(value).trim().replace(/^"|"$/g, "").replace(/""/g, '"');
+}
+
+
+function parseCsvLine(line) {
+  const out = [];
+  let cell = "";
+  let inQuotes = false;
+
+
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    const next = line[i + 1];
+
+
+    if (ch === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+
+    if (ch === "," && !inQuotes) {
+      out.push(cell);
+      cell = "";
+      continue;
+    }
+
+
+    cell += ch;
+  }
+
+
+  out.push(cell);
+  return out;
+}
+
+
+function getByAliases(row, aliases) {
+  const keys = Object.keys(row || {});
+
+
+  for (let i = 0; i < aliases.length; i += 1) {
+    const target = normalizeHeader(aliases[i]);
+    const actual = keys.find((key) => normalizeHeader(key) === target);
+    if (actual && String(row[actual]).trim()) {
+      return row[actual];
+    }
+  }
+
+
+  return "";
+}
+
+
+function normalizeHeader(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 

@@ -8,7 +8,7 @@ A simple and unique giveaway web app that lets you:
 - Spin through the full subscriber list visually
 - Pick a winner from uploaded subscribers
 - Show full winner details after the spin
-- Unlock hidden winner setup by double-clicking the W in Giveaway Wheel title
+- Unlock hidden winner setup by triple-clicking the W in Giveaway Wheel title
 
 
 ## Quick Run
@@ -102,6 +102,70 @@ After deployment, Vercel gives you a free URL like:
 When you change code and push to GitHub, Vercel automatically redeploys.
 
 
+## Re-Deploy to Vercel (After Changes)
+
+
+### If project is connected to GitHub
+
+
+Run in project folder:
+
+
+```bash
+git add .
+git commit -m "update giveaway feature"
+git push
+```
+
+
+Vercel will auto redeploy from the latest commit.
+
+
+### Manual redeploy from Vercel dashboard
+
+
+1. Open your Vercel project.
+2. Go to **Deployments**.
+3. Open latest deployment.
+4. Click **Redeploy**.
+
+
+### Force production redeploy via CLI
+
+
+```bash
+vercel --prod
+```
+
+
+## How to Add New Feature and Publish to Vercel
+
+
+1. Edit your files (for example `index.html`, `styles.css`, `app.js`).
+2. Test locally.
+3. Commit and push:
+
+
+```bash
+git add .
+git commit -m "add: <feature-name>"
+git push
+```
+
+
+4. Wait for Vercel deployment to finish.
+5. Open deployed URL and verify feature.
+
+
+### Recommended feature test checklist
+
+
+1. Upload CSV and confirm entries load.
+2. Spin and confirm winner card appears.
+3. Triple-click `W` and test hidden winner selection.
+4. Verify in Chrome/Edge/Firefox.
+
+
 ### Option B: Deploy using Vercel CLI
 
 
@@ -146,7 +210,7 @@ During first `vercel` run, answer prompts:
 
 - This app is static HTML/CSS/JS, so Vercel free tier is enough.
 - No backend is required.
-- Private winner setup is hidden by default and opens only on double-clicking the W letter in the title.
+- Private winner setup is hidden by default and opens only on triple-clicking the W letter in the title.
 - If CSV/local behavior seems different in browser, do a hard refresh once (`Ctrl+F5`).
 
 
