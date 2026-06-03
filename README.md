@@ -8,7 +8,7 @@ A simple and unique giveaway web app that lets you:
 - Spin through the full subscriber list visually
 - Pick a winner from uploaded subscribers
 - Show full winner details after the spin
-- Unlock hidden winner setup by tapping the W in Giveaway Wheel title 5 times
+
 
 
 ## Quick Run
