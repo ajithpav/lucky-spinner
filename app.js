@@ -326,7 +326,7 @@ async function runSpin() {
 
 
   const winner = state.manualWinner || winnerPool[Math.floor(Math.random() * winnerPool.length)];
-  const totalDurationMs = 22000;
+  const totalDurationMs = 16000;
   const countdownMs = 5000;
   const startTime = Date.now();
 
@@ -472,11 +472,24 @@ function launchConfetti(pieceCount = 140) {
   for (let i = 0; i < pieceCount; i += 1) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
-    piece.style.left = `${Math.random() * 100}vw`;
+    const fromLeft = i % 2 === 0;
+    const startX = fromLeft
+      ? 2 + Math.random() * 16
+      : 82 + Math.random() * 16;
+    const side = fromLeft ? 1 : -1;
+    const peakX = (12 + Math.random() * 24) * side;
+    const endX = (18 + Math.random() * 32) * side;
+    const riseHeight = 42 + Math.random() * 28;
+
+
+    piece.style.left = `${startX}vw`;
     piece.style.background = colors[i % colors.length];
     piece.style.animationDelay = `${Math.random() * 0.25}s`;
-    piece.style.animationDuration = `${2 + Math.random() * 1.8}s`;
+    piece.style.animationDuration = `${2.2 + Math.random() * 1.6}s`;
     piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+    piece.style.setProperty("--peak-x", `${peakX}vw`);
+    piece.style.setProperty("--end-x", `${endX}vw`);
+    piece.style.setProperty("--rise-height", `${riseHeight}vh`);
     layer.appendChild(piece);
   }
 
