@@ -25,6 +25,8 @@ const secretW = document.getElementById("secretW");
 
 let secretClickCount = 0;
 let secretClickTimer = null;
+let secretLongPressTimer = null;
+let secretJustOpenedAt = 0;
 
 
 csvFileInput.addEventListener("change", handleFileUpload);
@@ -32,6 +34,12 @@ uploadBtn.addEventListener("click", openFilePicker);
 resetEntriesBtn.addEventListener("click", resetEntries);
 spinBtn.addEventListener("click", runSpin);
 secretW.addEventListener("click", handleSecretClick);
+secretW.addEventListener("touchstart", handleSecretTouchStart, { passive: true });
+secretW.addEventListener("touchend", clearSecretLongPress);
+secretW.addEventListener("touchcancel", clearSecretLongPress);
+secretW.addEventListener("mousedown", handleSecretTouchStart);
+secretW.addEventListener("mouseup", clearSecretLongPress);
+secretW.addEventListener("mouseleave", clearSecretLongPress);
 window.addEventListener("resize", renderWheel);
 
 
@@ -170,6 +178,11 @@ function getWinnerPool() {
 
 
 function handleSecretClick() {
+  if (Date.now() - secretJustOpenedAt < 450) {
+    return;
+  }
+
+
   secretClickCount += 1;
 
 
@@ -187,7 +200,26 @@ function handleSecretClick() {
 
   secretClickTimer = setTimeout(() => {
     secretClickCount = 0;
-  }, 550);
+  }, 2200);
+}
+
+
+function handleSecretTouchStart() {
+  clearSecretLongPress();
+  secretLongPressTimer = setTimeout(() => {
+    secretJustOpenedAt = Date.now();
+    secretClickCount = 0;
+    setupSecretWinner();
+  }, 900);
+}
+
+
+function clearSecretLongPress() {
+  if (!secretLongPressTimer) {
+    return;
+  }
+  clearTimeout(secretLongPressTimer);
+  secretLongPressTimer = null;
 }
 
 
@@ -216,11 +248,6 @@ function setupSecretWinner() {
 
 
   if (!cleanedName) {
-    return;
-  }
-
-
-  if (!cleanedPhone && !cleanedEmail) {
     return;
   }
 
@@ -268,6 +295,11 @@ function resolvePendingSecretWinner() {
 
 
     const emailMatch = criteriaEmail && personEmail === criteriaEmail;
+
+
+    if (!criteriaPhone && !criteriaEmail) {
+      return nameMatch;
+    }
 
 
     const identifierMatch =
@@ -600,6 +632,8 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+
 
 
 

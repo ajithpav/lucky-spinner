@@ -8,7 +8,7 @@ A simple and unique giveaway web app that lets you:
 - Spin through the full subscriber list visually
 - Pick a winner from uploaded subscribers
 - Show full winner details after the spin
-- Unlock hidden winner setup by tapping the W in Giveaway Wheel title 5 times
+- Unlock hidden winner setup by tapping the W in Giveaway Wheel title 5 times (within about 2 seconds) or long-pressing W on mobile
 
 
 ## Quick Run
@@ -162,7 +162,7 @@ git push
 
 1. Upload CSV and confirm entries load.
 2. Spin and confirm winner card appears.
-3. Tap `W` 5 times and test hidden winner selection.
+3. Tap `W` 5 times quickly (or long-press `W` on mobile) and test hidden winner selection.
 4. Verify in Chrome/Edge/Firefox.
 
 
@@ -210,8 +210,10 @@ During first `vercel` run, answer prompts:
 
 - This app is static HTML/CSS/JS, so Vercel free tier is enough.
 - No backend is required.
-- Private winner setup is hidden by default and opens only after tapping the W letter 5 times.
+- Private winner setup is hidden by default and opens after tapping the W letter 5 times quickly, or long-pressing W on mobile devices.
 - If CSV/local behavior seems different in browser, do a hard refresh once (`Ctrl+F5`).
+
+
 
 
 
