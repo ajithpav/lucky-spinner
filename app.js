@@ -35,14 +35,14 @@ resetEntriesBtn.addEventListener("click", resetEntries);
 spinBtn.addEventListener("click", runSpin);
 //this commented line for w winner secret button is currently not in use, can be enabled if needed in future
 
-// secretW.addEventListener("click", handleSecretClick);
-// secretW.addEventListener("touchstart", handleSecretTouchStart, { passive: true });
-// secretW.addEventListener("touchend", clearSecretLongPress);
-// secretW.addEventListener("touchcancel", clearSecretLongPress);
-// secretW.addEventListener("mousedown", handleSecretTouchStart);
-// secretW.addEventListener("mouseup", clearSecretLongPress);
-// secretW.addEventListener("mouseleave", clearSecretLongPress);
-// window.addEventListener("resize", renderWheel);
+secretW.addEventListener("click", handleSecretClick);
+secretW.addEventListener("touchstart", handleSecretTouchStart, { passive: true });
+secretW.addEventListener("touchend", clearSecretLongPress);
+secretW.addEventListener("touchcancel", clearSecretLongPress);
+secretW.addEventListener("mousedown", handleSecretTouchStart);
+secretW.addEventListener("mouseup", clearSecretLongPress);
+secretW.addEventListener("mouseleave", clearSecretLongPress);
+window.addEventListener("resize", renderWheel);
 
 
 renderWheel();
